@@ -61,12 +61,16 @@ function summarize(log, pollIntervalSeconds = 5) {
   let activeSeconds = 0;
   let idleSeconds = 0;
   const appTotals = {};
+  // Cap any single gap so a stop/resume, closed app, or offline period
+  // isn't misattributed as active or idle time.
+  const maxGapSeconds = pollIntervalSeconds * 2;
   for (let i = 0; i < log.length; i++) {
     const entry = log[i];
     const next = log[i + 1];
-    const dur = next
+    let dur = next
       ? (new Date(next.timestamp) - new Date(entry.timestamp)) / 1000
       : pollIntervalSeconds;
+    dur = Math.min(dur, maxGapSeconds);
     if (entry.idle) {
       idleSeconds += dur;
     } else {
